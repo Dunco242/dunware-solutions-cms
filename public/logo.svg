@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="100" viewBox="0 0 200 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M20 20h30v60h-30z" stroke="#2563EB" stroke-width="2"/>
+  <path d="M50 20h30v30h-30z" stroke="#2563EB" stroke-width="2"/>
+  <path d="M120 20h30v60h-30z" stroke="#2563EB" stroke-width="2"/>
+  <path d="M20 90h160" stroke="#2563EB" stroke-width="2"/>
+  <text x="20" y="110" font-family="Arial" font-size="14" fill="#2563EB">DunWare Solutions</text>
+  <text x="20" y="125" font-family="Arial" font-size="10" fill="#60A5FA">FOR SMALL BUSINESSES</text>
+</svg>
