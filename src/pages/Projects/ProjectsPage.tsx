@@ -1,15 +1,66 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardBody } from '../../components/ui/Card';
 import { Plus, Search, Filter, Calendar, Clock, Users, BarChart, ChevronRight, CheckCircle2, AlertCircle } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import Avatar from '../../components/ui/Avatar';
 import { Project, Task } from '../../types';
+import { projectService } from '../../services/projects';
+import { useNavigate } from 'react-router-dom';
+import ProjectForm from '../../components/projects/ProjectForm';
+import { useAuthContext } from '../../components/auth/AuthProvider';
 
 const ProjectsPage: React.FC = () => {
+  const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showProjectForm, setShowProjectForm] = useState(false);
+  const navigate = useNavigate();
+  const { user } = useAuthContext();
   
-  // Mock data
-  const projects: Project[] = [
+  useEffect(() => {
+    loadProjects();
+  }, []);
+
+  const loadProjects = async () => {
+    try {
+      setIsLoading(true);
+      // Fetch projects from Supabase
+      const { data, error } = await projectService.supabase
+        .from('projects')
+        .select('*');
+      
+      if (error) throw error;
+      setProjects(data || []);
+    } catch (error) {
+      console.error('Error loading projects:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCreateProject = async (projectData: Partial<Project>) => {
+    try {
+      if (!user) return;
+      
+      const newProject = await projectService.createProject({
+        ...projectData,
+        createdBy: user.id
+      });
+      
+      setProjects([...projects, newProject]);
+      setShowProjectForm(false);
+    } catch (error) {
+      console.error('Error creating project:', error);
+    }
+  };
+
+  const handleProjectClick = (projectId: string) => {
+    setSelectedProject(projectId);
+    navigate(`/projects/${projectId}`);
+  };
+
+  // Mock data for UI display until real data is loaded
+  const mockProjects: Project[] = [
     {
       id: '1',
       name: 'Website Redesign',
@@ -99,6 +150,8 @@ const ProjectsPage: React.FC = () => {
     }
   ];
 
+  const displayProjects = projects.length > 0 ? projects : mockProjects;
+
   return (
     <div className="py-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
@@ -107,7 +160,7 @@ const ProjectsPage: React.FC = () => {
           <p className="mt-1 text-gray-600">Manage and track project progress</p>
         </div>
         <div className="mt-4 md:mt-0">
-          <Button>
+          <Button onClick={() => setShowProjectForm(true)}>
             <Plus size={16} className="mr-2" />
             New Project
           </Button>
@@ -138,13 +191,13 @@ const ProjectsPage: React.FC = () => {
             </CardHeader>
 
             <div className="divide-y divide-gray-200">
-              {projects.map(project => (
+              {displayProjects.map(project => (
                 <div
                   key={project.id}
                   className={`p-4 cursor-pointer hover:bg-gray-50 ${
                     selectedProject === project.id ? 'bg-blue-50' : ''
                   }`}
-                  onClick={() => setSelectedProject(project.id)}
+                  onClick={() => handleProjectClick(project.id)}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-sm font-medium text-gray-900">{project.name}</h3>
@@ -169,7 +222,7 @@ const ProjectsPage: React.FC = () => {
                       </div>
                       <div className="flex items-center">
                         <Users size={14} className="mr-1" />
-                        {project.team.length}
+                        {project.team?.length || 0}
                       </div>
                     </div>
 
@@ -188,7 +241,7 @@ const ProjectsPage: React.FC = () => {
 
                     <div className="flex items-center justify-between">
                       <div className="flex -space-x-2">
-                        {project.team.map(member => (
+                        {project.team?.map(member => (
                           <Avatar
                             key={member.id}
                             src={member.avatar}
@@ -219,8 +272,8 @@ const ProjectsPage: React.FC = () => {
                       <div>
                         <p className="text-sm text-gray-500">Tasks</p>
                         <p className="text-2xl font-semibold">
-                          {projects[0].analytics.progress.tasks.completed}/
-                          {projects[0].analytics.progress.tasks.total}
+                          {mockProjects[0].analytics.progress.tasks.completed}/
+                          {mockProjects[0].analytics.progress.tasks.total}
                         </p>
                       </div>
                       <div className="p-3 bg-blue-100 rounded-lg">
@@ -229,7 +282,7 @@ const ProjectsPage: React.FC = () => {
                     </div>
                     <div className="mt-2 text-sm text-red-600 flex items-center">
                       <AlertCircle size={14} className="mr-1" />
-                      {projects[0].analytics.progress.tasks.overdue} overdue
+                      {mockProjects[0].analytics.progress.tasks.overdue} overdue
                     </div>
                   </CardBody>
                 </Card>
@@ -240,7 +293,7 @@ const ProjectsPage: React.FC = () => {
                       <div>
                         <p className="text-sm text-gray-500">Time Tracked</p>
                         <p className="text-2xl font-semibold">
-                          {Math.floor(projects[0].analytics.timeTracking.actual / 60)}h
+                          {Math.floor(mockProjects[0].analytics.timeTracking.actual / 60)}h
                         </p>
                       </div>
                       <div className="p-3 bg-green-100 rounded-lg">
@@ -248,7 +301,7 @@ const ProjectsPage: React.FC = () => {
                       </div>
                     </div>
                     <div className="mt-2 text-sm text-gray-600">
-                      {Math.floor(projects[0].analytics.timeTracking.remaining / 60)}h remaining
+                      {Math.floor(mockProjects[0].analytics.timeTracking.remaining / 60)}h remaining
                     </div>
                   </CardBody>
                 </Card>
@@ -259,7 +312,7 @@ const ProjectsPage: React.FC = () => {
                       <div>
                         <p className="text-sm text-gray-500">Budget Spent</p>
                         <p className="text-2xl font-semibold">
-                          ${(projects[0].analytics.costs.actual / 1000).toFixed(1)}k
+                          ${(mockProjects[0].analytics.costs.actual / 1000).toFixed(1)}k
                         </p>
                       </div>
                       <div className="p-3 bg-purple-100 rounded-lg">
@@ -267,7 +320,7 @@ const ProjectsPage: React.FC = () => {
                       </div>
                     </div>
                     <div className="mt-2 text-sm text-gray-600">
-                      ${(projects[0].analytics.costs.remaining / 1000).toFixed(1)}k remaining
+                      ${(mockProjects[0].analytics.costs.remaining / 1000).toFixed(1)}k remaining
                     </div>
                   </CardBody>
                 </Card>
@@ -284,7 +337,7 @@ const ProjectsPage: React.FC = () => {
                       </div>
                     </div>
                     <div className="mt-2 text-sm text-gray-600">
-                      {Object.keys(projects[0].analytics.team.utilization).length} active members
+                      {Object.keys(mockProjects[0].analytics.team.utilization).length} active members
                     </div>
                   </CardBody>
                 </Card>
@@ -303,7 +356,7 @@ const ProjectsPage: React.FC = () => {
                     </div>
                   </CardHeader>
                   <div className="p-4 space-y-4">
-                    {projects[0].tasks.map(task => (
+                    {mockProjects[0].tasks.map(task => (
                       <div
                         key={task.id}
                         className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
@@ -345,7 +398,7 @@ const ProjectsPage: React.FC = () => {
                     </div>
                   </CardHeader>
                   <div className="p-4">
-                    {projects[0].milestones.map(milestone => (
+                    {mockProjects[0].milestones.map(milestone => (
                       <div
                         key={milestone.id}
                         className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 mb-4"
@@ -384,6 +437,15 @@ const ProjectsPage: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Project Form Modal */}
+      {showProjectForm && (
+        <ProjectForm
+          onSubmit={handleCreateProject}
+          onClose={() => setShowProjectForm(false)}
+          isLoading={isLoading}
+        />
+      )}
     </div>
   );
 };

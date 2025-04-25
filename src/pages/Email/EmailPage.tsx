@@ -1,65 +1,71 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardBody } from '../../components/ui/Card';
-import { Mail, Star, Inbox, Send, Archive, Trash, Plus, Search, Filter, Download, Tag } from 'lucide-react';
+import { Mail, Star, Inbox, Send, Archive, Trash, Plus, Search, Filter, Download, Tag, Settings, Loader } from 'lucide-react';
 import Button from '../../components/ui/Button';
+import { emailService } from '../../services/email';
 import { Email } from '../../types';
+import EmailComposer from '../../components/email/EmailComposer';
+import EmailList from '../../components/email/EmailList';
+import EmailThread from '../../components/email/EmailThread';
+import EmailAccountSetup from '../../components/email/EmailAccountSetup';
 
 const EmailPage: React.FC = () => {
-  const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
+  const [emails, setEmails] = useState<Email[]>([]);
+  const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
   const [currentFolder, setCurrentFolder] = useState('inbox');
+  const [isLoading, setIsLoading] = useState(true);
+  const [showComposer, setShowComposer] = useState(false);
+  const [showAccountSetup, setShowAccountSetup] = useState(false);
+  const [hasEmailAccount, setHasEmailAccount] = useState(false);
   
-  // Mock data
-  const emails: Email[] = [
-    {
-      id: '1',
-      subject: 'Project Update - Q1 2025',
-      from: 'sarah.miller@example.com',
-      to: ['john.doe@company.com'],
-      body: 'Here\'s the latest update on our Q1 progress...',
-      attachments: [],
-      timestamp: '2025-04-22T10:30:00Z',
-      read: false,
-      starred: true,
-      labels: ['important', 'work'],
-      thread: 'thread-1',
-      importance: 'high',
-      category: 'primary',
-      securityStatus: {
-        encrypted: true,
-        signed: true,
-        spamScore: 0
-      }
-    },
-    {
-      id: '2',
-      subject: 'Client Meeting Notes',
-      from: 'mike.wilson@example.com',
-      to: ['john.doe@company.com'],
-      body: 'Following up on our discussion...',
-      attachments: [
-        {
-          id: '1',
-          name: 'meeting-notes.pdf',
-          size: 2500000,
-          type: 'application/pdf',
-          url: '#',
-          scanStatus: 'clean'
-        }
-      ],
-      timestamp: '2025-04-22T09:15:00Z',
-      read: true,
-      starred: false,
-      labels: ['client'],
-      thread: 'thread-2',
-      importance: 'normal',
-      category: 'primary',
-      securityStatus: {
-        encrypted: true,
-        signed: true,
-        spamScore: 0
-      }
+  useEffect(() => {
+    checkEmailAccount();
+    if (hasEmailAccount) {
+      loadEmails();
     }
-  ];
+  }, [currentFolder, hasEmailAccount]);
+
+  const checkEmailAccount = async () => {
+    try {
+      const accounts = await emailService.getEmailAccounts();
+      setHasEmailAccount(accounts.length > 0);
+      setShowAccountSetup(accounts.length === 0);
+    } catch (error) {
+      console.error('Error checking email accounts:', error);
+    }
+  };
+
+  const loadEmails = async () => {
+    try {
+      setIsLoading(true);
+      const fetchedEmails = await emailService.getEmails(currentFolder);
+      setEmails(fetchedEmails);
+    } catch (error) {
+      console.error('Error loading emails:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSendEmail = async (emailData: Partial<Email>) => {
+    try {
+      await emailService.sendEmail(emailData);
+      setShowComposer(false);
+      loadEmails();
+    } catch (error) {
+      console.error('Error sending email:', error);
+    }
+  };
+
+  const handleAccountSetup = async (config: any) => {
+    try {
+      await emailService.addEmailAccount(config);
+      setShowAccountSetup(false);
+      setHasEmailAccount(true);
+    } catch (error) {
+      console.error('Error setting up email account:', error);
+    }
+  };
 
   const folders = [
     { id: 'inbox', name: 'Inbox', icon: Inbox, count: 12 },
@@ -69,13 +75,14 @@ const EmailPage: React.FC = () => {
     { id: 'trash', name: 'Trash', icon: Trash, count: 0 },
   ];
 
-  const handleSelectEmail = (emailId: string) => {
-    setSelectedEmails(prev => 
-      prev.includes(emailId) 
-        ? prev.filter(id => id !== emailId)
-        : [...prev, emailId]
+  if (showAccountSetup) {
+    return (
+      <EmailAccountSetup
+        onSetup={handleAccountSetup}
+        onCancel={() => setShowAccountSetup(false)}
+      />
     );
-  };
+  }
 
   return (
     <div className="py-6">
@@ -85,7 +92,7 @@ const EmailPage: React.FC = () => {
           <p className="mt-1 text-gray-600">Manage your email communications</p>
         </div>
         <div className="mt-4 md:mt-0">
-          <Button>
+          <Button onClick={() => setShowComposer(true)}>
             <Plus size={16} className="mr-2" />
             Compose
           </Button>
@@ -97,7 +104,7 @@ const EmailPage: React.FC = () => {
         <div className="lg:w-64">
           <Card>
             <CardBody className="p-4">
-              <Button variant="primary" fullWidth>
+              <Button variant="primary" fullWidth onClick={() => setShowComposer(true)}>
                 <Plus size={16} className="mr-2" />
                 Compose
               </Button>
@@ -144,6 +151,17 @@ const EmailPage: React.FC = () => {
                   </button>
                 </div>
               </div>
+
+              <div className="mt-6 pt-6 border-t">
+                <Button
+                  variant="outline"
+                  fullWidth
+                  onClick={() => setShowAccountSetup(true)}
+                >
+                  <Settings size={16} className="mr-2" />
+                  Email Settings
+                </Button>
+              </div>
             </CardBody>
           </Card>
         </div>
@@ -176,67 +194,33 @@ const EmailPage: React.FC = () => {
               </div>
             </CardHeader>
 
-            <div className="divide-y divide-gray-200">
-              {emails.map(email => (
-                <div
-                  key={email.id}
-                  className={`
-                    flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer
-                    ${email.read ? 'bg-white' : 'bg-blue-50'}
-                  `}
-                >
-                  <div className="flex items-center mr-4">
-                    <input
-                      type="checkbox"
-                      checked={selectedEmails.includes(email.id)}
-                      onChange={() => handleSelectEmail(email.id)}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <button 
-                      className={`ml-2 text-gray-400 hover:text-yellow-400 ${
-                        email.starred ? 'text-yellow-400' : ''
-                      }`}
-                    >
-                      <Star size={18} />
-                    </button>
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <p className={`text-sm font-medium ${email.read ? 'text-gray-900' : 'text-gray-900'}`}>
-                        {email.from}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {new Date(email.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                    </div>
-                    <div className="flex items-center justify-between mt-1">
-                      <p className={`text-sm ${email.read ? 'text-gray-600' : 'font-semibold text-gray-900'}`}>
-                        {email.subject}
-                      </p>
-                      <div className="flex items-center">
-                        {email.attachments.length > 0 && (
-                          <span className="mr-2">
-                            <Mail size={16} className="text-gray-400" />
-                          </span>
-                        )}
-                        {email.labels.map(label => (
-                          <span
-                            key={label}
-                            className="ml-2 px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-600"
-                          >
-                            {label}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            {isLoading ? (
+              <div className="flex justify-center items-center h-64">
+                <Loader className="w-8 h-8 animate-spin text-blue-500" />
+              </div>
+            ) : selectedEmail ? (
+              <EmailThread
+                email={selectedEmail}
+                onClose={() => setSelectedEmail(null)}
+                onReply={handleSendEmail}
+              />
+            ) : (
+              <EmailList
+                emails={emails}
+                onSelectEmail={setSelectedEmail}
+                currentFolder={currentFolder}
+              />
+            )}
           </Card>
         </div>
       </div>
+
+      {showComposer && (
+        <EmailComposer
+          onSend={handleSendEmail}
+          onClose={() => setShowComposer(false)}
+        />
+      )}
     </div>
   );
 };

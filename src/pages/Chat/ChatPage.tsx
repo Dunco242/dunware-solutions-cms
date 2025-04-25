@@ -5,6 +5,7 @@ import { Search, Send, Paperclip, MoreVertical, Phone, Video, User, Plus, Messag
 import Button from '../../components/ui/Button';
 import { chatService } from '../../services/chat';
 import { useAuth } from '../../hooks/useAuth';
+import { supabase } from '../../config/database';
 
 const ChatPage: React.FC = () => {
   const [activeChat, setActiveChat] = useState<string | null>(null);

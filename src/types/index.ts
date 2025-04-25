@@ -12,8 +12,8 @@ export interface User {
   name: string;
   email: string;
   avatar: string;
-  role: string;
-  permissions: string[];
+  role?: string;
+  permissions?: string[];
 }
 
 export interface SidebarItem {
@@ -50,6 +50,12 @@ export interface Contact {
   customFields: Record<string, any>;
   createdAt: string;
   updatedAt: string;
+  dateOfBirth?: string;
+  socialProfiles?: Record<string, string>;
+  marketingConsent?: boolean;
+  consentTimestamp?: string;
+  dataProcessingConsent?: boolean;
+  notes?: string;
 }
 
 export interface Company {
@@ -59,13 +65,19 @@ export interface Company {
   size: string;
   revenue: number;
   website: string;
-  address: Address;
-  contacts: Contact[];
-  deals: Deal[];
+  address?: Address;
+  contacts?: Contact[];
+  deals?: Deal[];
   status: 'lead' | 'customer' | 'partner';
-  assignedTo: User;
-  createdAt: string;
-  updatedAt: string;
+  assignedTo?: string;
+  createdBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  internalNotes?: string;
+  customFields?: Record<string, any>;
+  dataProcessingConsent?: boolean;
+  consentTimestamp?: string;
+  securityLevel?: string;
 }
 
 export interface Deal {
@@ -96,6 +108,9 @@ export interface Product {
   status: 'active' | 'inactive';
   createdAt: string;
   updatedAt: string;
+  createdBy?: string;
+  quantity?: number;
+  discount?: number;
 }
 
 export interface Activity {
@@ -125,6 +140,7 @@ export interface Note {
   createdBy: User;
   createdAt: string;
   updatedAt: string;
+  securityLevel?: string;
 }
 
 export interface Address {
@@ -192,7 +208,8 @@ export interface Project {
   id: string;
   name: string;
   description: string;
-  status: 'planning' | 'in-progress' | 'completed' | 'on-hold';
+  status: string;
+  priority?: string;
   progress: number;
   startDate: string;
   endDate: string;
@@ -202,20 +219,25 @@ export interface Project {
   tasks: Task[];
   milestones: Milestone[];
   analytics: ProjectAnalytics;
+  createdBy?: string;
+  tags?: string[];
 }
 
 export interface Task {
   id: string;
   title: string;
   description: string;
-  status: 'todo' | 'in-progress' | 'review' | 'done';
-  priority: 'low' | 'medium' | 'high';
+  status: string;
+  priority: string;
   assignedTo: User[];
   startDate: string;
   dueDate: string;
   completedAt?: string;
   dependencies: string[];
   timeTracking: TimeEntry[];
+  projectId?: string;
+  estimatedHours?: number;
+  createdBy?: string;
 }
 
 export interface Milestone {
@@ -223,8 +245,10 @@ export interface Milestone {
   title: string;
   description: string;
   dueDate: string;
-  status: 'upcoming' | 'in-progress' | 'completed' | 'delayed';
-  tasks: Task[];
+  status: string;
+  tasks: { id: string }[];
+  projectId?: string;
+  createdBy?: string;
 }
 
 export interface TimeEntry {
@@ -235,6 +259,47 @@ export interface TimeEntry {
   endTime?: string;
   duration: number;
   description: string;
+  projectId?: string;
+  date?: string;
+  billable?: boolean;
+  billingRate?: number;
+  category?: string;
+  tags?: string[];
+}
+
+export interface Risk {
+  id: string;
+  title: string;
+  description?: string;
+  riskType: string;
+  probability: string;
+  impact: string;
+  status: string;
+  mitigationStrategy?: string;
+  mitigationOwner?: string;
+  contingencyPlan?: string;
+  estimatedCost?: number;
+  targetResolutionDate?: string;
+  projectId?: string;
+  createdBy?: string;
+}
+
+export interface Report {
+  id: string;
+  title: string;
+  reportType: string;
+  content: any;
+  metrics?: any;
+  periodStart: string;
+  periodEnd: string;
+  status: string;
+  distributionList?: string[];
+  projectId?: string;
+  createdBy?: string;
+  created_by?: string;
+  approved_by?: string;
+  created_at?: string;
+  report_type?: string;
 }
 
 export interface ProjectAnalytics {
@@ -339,6 +404,7 @@ export interface Email {
     signed: boolean;
     spamScore: number;
   };
+  html?: boolean;
 }
 
 export interface Attachment {

@@ -1,9 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
-import * as XLSX from 'xlsx';
-import Papa from 'papaparse';
-import localforage from 'localforage';
 import Dexie from 'dexie';
-import CryptoJS from 'crypto-js';
+
+// Create and export the Supabase client instance
+export const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+);
 
 export type DatabaseProvider = 'supabase' | 'spreadsheet' | 'local';
 
@@ -30,12 +32,6 @@ const dbConfig: DatabaseConfig = {
     },
   },
 };
-
-// Create and export the Supabase client instance
-export const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
 
 // Local database using Dexie
 const db = new Dexie('AppDatabase');

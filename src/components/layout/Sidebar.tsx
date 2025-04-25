@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, X, ChevronDown, ChevronRight, Users, Calendar, Mail, Briefcase, Map, MessageSquare, FileText, Settings, User, DollarSign } from 'lucide-react';
+import { Menu, X, ChevronDown, ChevronRight, Users, Calendar, Mail, Briefcase, Map, MessageSquare, FileText, Settings, User, DollarSign, LayoutDashboard, Building, Phone, ClipboardList, Clock, Target, AlertTriangle, LineChart } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { SidebarItem } from '../../types';
 
@@ -25,6 +25,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       route: '/crm',
       children: [
         {
+          id: 'companies',
+          name: 'Companies',
+          icon: 'building',
+          route: '/crm/companies',
+        },
+        {
           id: 'contacts',
           name: 'Contacts',
           icon: 'user',
@@ -35,6 +41,56 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
           name: 'Deals',
           icon: 'dollar-sign',
           route: '/crm/deals',
+        },
+        {
+          id: 'activities',
+          name: 'Activities',
+          icon: 'phone',
+          route: '/crm/activities',
+        },
+      ],
+    },
+    {
+      id: 'projects',
+      name: 'Projects',
+      icon: 'briefcase',
+      route: '/projects',
+      children: [
+        {
+          id: 'project-list',
+          name: 'All Projects',
+          icon: 'clipboard-list',
+          route: '/projects',
+        },
+        {
+          id: 'tasks',
+          name: 'Tasks & Kanban',
+          icon: 'clipboard-list',
+          route: '/projects/tasks',
+        },
+        {
+          id: 'timeline',
+          name: 'Timeline',
+          icon: 'clock',
+          route: '/projects/timeline',
+        },
+        {
+          id: 'milestones',
+          name: 'Milestones',
+          icon: 'target',
+          route: '/projects/milestones',
+        },
+        {
+          id: 'risks',
+          name: 'Risk Management',
+          icon: 'alert-triangle',
+          route: '/projects/risks',
+        },
+        {
+          id: 'reports',
+          name: 'Reports & Analytics',
+          icon: 'line-chart',
+          route: '/projects/reports',
         },
       ],
     },
@@ -49,12 +105,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       name: 'Email',
       icon: 'mail',
       route: '/email',
-    },
-    {
-      id: 'projects',
-      name: 'Projects',
-      icon: 'briefcase',
-      route: '/projects',
     },
     {
       id: 'routes',
@@ -83,7 +133,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   ];
 
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({
-    crm: false,
+    crm: location.pathname.startsWith('/crm'),
+    projects: location.pathname.startsWith('/projects'),
   });
 
   const toggleExpand = (id: string) => {
@@ -95,7 +146,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
 
   const renderIcon = (iconName: string) => {
     const icons: Record<string, React.FC> = {
-      'layout-dashboard': () => <Menu size={20} />,
+      'layout-dashboard': () => <LayoutDashboard size={20} />,
       'users': () => <Users size={20} />,
       'calendar': () => <Calendar size={20} />,
       'mail': () => <Mail size={20} />,
@@ -106,6 +157,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       'settings': () => <Settings size={20} />,
       'user': () => <User size={20} />,
       'dollar-sign': () => <DollarSign size={20} />,
+      'building': () => <Building size={20} />,
+      'phone': () => <Phone size={20} />,
+      'clipboard-list': () => <ClipboardList size={20} />,
+      'clock': () => <Clock size={20} />,
+      'target': () => <Target size={20} />,
+      'alert-triangle': () => <AlertTriangle size={20} />,
+      'line-chart': () => <LineChart size={20} />,
     };
     
     const IconComponent = icons[iconName];
